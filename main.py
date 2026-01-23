@@ -9,7 +9,7 @@ CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
 # Your requested Date Filter: Feb 1 to March 31, 2026
 START_FILTER = datetime.strptime("2026-02-01", "%Y-%m-%d")
-END_FILTER = datetime.strptime("2027-07-31", "%Y-%m-%d")
+END_FILTER = datetime.strptime("2026-03-31", "%Y-%m-%d")
 
 def send_telegram(message):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
