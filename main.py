@@ -1,13 +1,14 @@
 import requests
 import os
 from datetime import datetime
+import pytz # This handles the Spokane time zone
 
-# Configuration
-LOCATION_ID = 5005  # Portland PDX
-TOKEN = os.environ.get("TELEGRAM_TOKEN")
-CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
+# CONFIGURATION
+LOCATION_ID = 5005  # Portland (PDX)
+TOKEN = "8274111965:AAGljIkykgOzkR-4V0q8aCmsbSD_v_6xqeE"
+CHAT_ID = "YOUR_CHAT_ID_HERE" 
 
-# Your requested Date Filter: Feb 1 to March 31, 2026
+# DATE FILTERS: February and March 2026
 START_FILTER = datetime.strptime("2026-02-01", "%Y-%m-%d")
 END_FILTER = datetime.strptime("2026-03-31", "%Y-%m-%d")
 
@@ -15,27 +16,33 @@ def send_telegram(message):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
     requests.get(url)
 
+def check_heartbeat():
+    # Gets the current time in Spokane
+    spokane_tz = pytz.timezone('America/Los_Angeles')
+    now = datetime.now(spokane_tz)
+    
+    # If it's between 9:00 AM and 9:15 AM, send a heartbeat
+    if now.hour == 9 and now.minute < 15:
+        send_telegram("☀️ Good morning! Your Portland Global Entry bot is awake and scanning.")
+
 def check_slots():
-    # We check the top 10 soonest slots to ensure we don't miss any in our window
     url = f"https://ttp.cbp.dhs.gov/schedulerapi/slots?orderBy=soonest&limit=10&locationId={LOCATION_ID}&minimum=1"
     try:
         response = requests.get(url).json()
         if not response:
-            print("No slots found at all for PDX.")
             return
 
         for slot in response:
-            slot_date_str = slot['startTimestamp'][:10] # Extracts YYYY-MM-DD
+            slot_date_str = slot['startTimestamp'][:10] 
             slot_date = datetime.strptime(slot_date_str, "%Y-%m-%d")
             
-            # Check if it falls in your Feb/March window
             if START_FILTER <= slot_date <= END_FILTER:
-                msg = f"🚨 PORTLAND SLOT FOUND!\nDate: {slot['startTimestamp']}\nBook it now: https://ttp.cbp.dhs.gov/"
+                msg = f"🚨 PORTLAND SLOT FOUND!\nDate: {slot['startTimestamp']}\nLogin: https://ttp.cbp.dhs.gov/"
                 send_telegram(msg)
-                print(f"Match found: {slot_date_str}")
-                return # Alert once per run to avoid spam
+                return 
     except Exception as e:
         print(f"Error: {e}")
 
 if __name__ == "__main__":
+    check_heartbeat()
     check_slots()
