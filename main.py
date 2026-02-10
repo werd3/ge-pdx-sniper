@@ -8,9 +8,9 @@ LOCATION_ID = 5005  # Portland (PDX)
 TOKEN = "8274111965:AAGljIkykgOzkR-4V0q8aCmsbSD_v_6xqeE"
 CHAT_ID = "YOUR_CHAT_ID_HERE" 
 
-# DATE FILTERS: February and March 2026
-START_FILTER = datetime.strptime("2026-02-01", "%Y-%m-%d")
-END_FILTER = datetime.strptime("2026-03-31", "%Y-%m-%d")
+# DATE FILTERS: Only your specific trip home dates
+START_FILTER = datetime.strptime("2026-03-11", "%Y-%m-%d")
+END_FILTER = datetime.strptime("2026-03-13", "%Y-%m-%d")
 
 def send_telegram(message):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
