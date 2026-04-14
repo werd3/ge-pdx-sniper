@@ -1,39 +1,52 @@
 import requests
+import os
 from datetime import datetime
 
-# CONFIG
+# CONFIG - pulled from GitHub Secrets / environment variables
 LOCATION_ID = 5005
-TOKEN = "8274111965:AAGljIkykgOzkR-4V0q8aCmsbSD_v_6xqeE"
-CHAT_ID = "YOUR_CHAT_ID_HERE"
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
+CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
 
-# THE ONLY VALID WINDOW
-TARGETS = ["2026-03-11", "2026-03-12", "2026-03-13"]
+# Target dates
+TARGETS = [
+    "2026-05-12",
+    "2026-05-13",
+    "2026-05-14",
+    "2026-05-15",
+    "2026-05-16",
+    "2026-05-17",
+]
 
 def send_telegram(message):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={CHAT_ID}&text={message}"
-    requests.get(url)
+    if not TOKEN or not CHAT_ID:
+        print("ERROR: Missing TELEGRAM_TOKEN or TELEGRAM_CHAT_ID environment variables.")
+        return
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    params = {"chat_id": CHAT_ID, "text": message}
+    try:
+        requests.get(url, params=params)
+    except Exception as e:
+        print(f"Telegram send error: {e}")
 
 def check_slots():
     url = f"https://ttp.cbp.dhs.gov/schedulerapi/slots?orderBy=soonest&limit=30&locationId={LOCATION_ID}&minimum=1"
     try:
-        response = requests.get(url).json()
-        print(f"--- V3.0 SCAN START ---")
-        
+        response = requests.get(url, timeout=10).json()
+        print(f"--- SCAN at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---")
+        found = False
         for slot in response:
             date_only = slot['startTimestamp'][:10]
-            
-            # THE SAFETY LOCK
             if date_only not in TARGETS:
-                print(f"DEBUG: Blocking {date_only}")
-                continue # Moving to the next slot without sending anything
-            
-            # THE ONLY WAY A MESSAGE SENDS
-            msg = f"✅ MATCH (V3.0)\nDate: {date_only}\nhttps://ttp.cbp.dhs.gov/"
+                print(f"  Skipping {date_only}")
+                continue
+            msg = f"✅ MATCH FOUND!\nDate: {date_only}\nBook now: https://ttp.cbp.dhs.gov/"
+            print(msg)
             send_telegram(msg)
-            return
-
+            found = True
+        if not found:
+            print("  No matching slots found.")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error fetching slots: {e}")
 
 if __name__ == "__main__":
     check_slots()
