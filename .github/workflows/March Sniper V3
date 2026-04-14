@@ -3,7 +3,6 @@ on:
   schedule:
     - cron: '7,22,37,52 * * * *'
   workflow_dispatch:
-
 jobs:
   run-pdx-check:
     runs-on: ubuntu-latest
@@ -14,6 +13,9 @@ jobs:
         with:
           python-version: '3.9'
       - name: Install Dependencies
-        run: pip install requests pytz # Added pytz here
+        run: pip install requests
       - name: Run Script
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python main.py
